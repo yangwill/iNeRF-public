@@ -103,7 +103,9 @@ def parse_args(
         args.conf = expconf.get_string("config." + args.name, default_conf)
     if args.datadir is None:
         args.datadir = expconf.get_string("datadir." + args.name, default_datadir)
-
+    # print(args)
+    # args.conf = 'conf/exp/srn.conf'
+    # print(args.conf)
     conf = ConfigFactory.parse_file(args.conf)
 
     if args.dataset_format is None:
