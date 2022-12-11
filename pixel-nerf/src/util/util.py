@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import functools
 import math
 import warnings
-
+from scipy.spatial.transform import Rotation as R
 
 def image_float_to_uint8(img):
     """
@@ -169,6 +169,50 @@ def coord_to_blender(dtype=torch.float32, device="cpu"):
         dtype=dtype,
         device=device,
     )
+
+def axis_angle_to_rotation_matrix(axis, theta):
+    """
+    Return the rotation matrix associated with counterclockwise rotation about
+    the given axis by theta radians.
+    """
+    axis = np.asarray(axis)
+    axis = axis / math.sqrt(np.dot(axis, axis))
+    a = math.cos(theta / 2.0)
+    b, c, d = -axis * math.sin(theta / 2.0)
+    aa, bb, cc, dd = a * a, b * b, c * c, d * d
+    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+    return np.array(
+        [
+            [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+            [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+            [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
+        ]
+    )
+
+def construct_contact_nets_transformation(camera_pose, camera_rotation):
+    angle = np.linalg.norm(camera_rotation)
+    axis = camera_rotation / angle
+    rotation = axis_angle_to_rotation_matrix(
+        axis, angle
+    )
+    rotation_prime = rotation.T  # USE THIS
+    transformation_matrix = np.empty((4, 4), dtype=np.float32)
+    translation_prime = -rotation_prime @ camera_pose  # USE THIS
+    transformation_matrix[:3, :3] = rotation_prime
+    transformation_matrix[:3, 3] = translation_prime
+    transformation_matrix[3, :] = [0, 0, 0, 1]
+    # print(transformation_matrix)
+    # print(rotation_prime.shape)
+    # print(translation_prime.shape)
+    # transformation_matrix = np.vstack(
+    #     (np.hstack((rotation_prime, translation_prime)), np.array([0, 0, 0, 1]))
+    # )
+    return torch.from_numpy(transformation_matrix)
+    #
+    # transformation_matrix[:3, :3] = np.linalg.inv(R.from_euler('xyz', camera_rotation).as_matrix())
+    # transformation_matrix[:3, 3] = - transformation_matrix[:3, :3] @ camera_pose
+    # transformation_matrix[3, :] = [0, 0, 0, 1]
+    # return torch.from_numpy(transformation_matrix)
 
 
 def look_at(origin, target, world_up=np.array([0, 1, 0], dtype=np.float32)):

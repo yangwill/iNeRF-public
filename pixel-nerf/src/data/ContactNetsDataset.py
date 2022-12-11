@@ -4,7 +4,8 @@ import torch.nn.functional as F
 import glob
 import imageio
 import numpy as np
-from util import get_image_to_tensor_balanced, get_mask_to_tensor
+from util import get_image_to_tensor_balanced, get_mask_to_tensor, construct_contact_nets_transformation
+import yaml
 
 
 class ContactNetsDataset(torch.utils.data.Dataset):
@@ -30,7 +31,8 @@ class ContactNetsDataset(torch.utils.data.Dataset):
         assert os.path.exists(self.base_path)
 
         self.intrins = sorted(
-            glob.glob(os.path.join(self.base_path, "*", "transforms.json"))
+            # glob.glob(os.path.join(self.base_path, "*", "transforms.json"))
+            glob.glob(os.path.join(self.base_path, "*", "realsense_pose.yaml"))
         )
         self.image_to_tensor = get_image_to_tensor_balanced()
         self.mask_to_tensor = get_mask_to_tensor()
@@ -41,10 +43,10 @@ class ContactNetsDataset(torch.utils.data.Dataset):
             torch.tensor([1, -1, -1, 1], dtype=torch.float32)
         )
 
-        # self.z_near = 0.8
-        # self.z_far = 1.8
-        self.z_near = 4.0
-        self.z_far = 6.0
+        self.z_near = 0.8
+        self.z_far = 1.8
+        # self.z_near = 4.0
+        # self.z_far = 6.0
         self.lindisp = False
         self._load_split(val_frac, test_frac, split_seed)
 
@@ -82,6 +84,7 @@ class ContactNetsDataset(torch.utils.data.Dataset):
 
         subset = permute[:train_end]
         self.intrins = [self.intrins[i] for i in subset]
+        print(len(self))
         assert len(self) == len(subset)
 
     def __getitem__(self, index):
@@ -90,17 +93,27 @@ class ContactNetsDataset(torch.utils.data.Dataset):
         rgb_paths = sorted(glob.glob(os.path.join(dir_path, "masked_rgb", "*")))
         pose_paths = sorted(glob.glob(os.path.join(dir_path, "gt_poses", "*")))
 
-        # print(rgb_paths)
-        # assert len(rgb_paths) == len(pose_paths)
-        # with open(intrin_path, "r") as intrinfile:
-        #     lines = intrinfile.readlines()
-        #     focal, cx, cy, _ = map(float, lines[0].split())
-        #     height, width = map(int, lines[-1].split())
+        camera_pose = 0
+        camera_rotation = 0
+
+        with open(self.intrins[0], "r") as intrinfile:
+            camera_intrins = yaml.safe_load(intrinfile)
+            camera_pose_x = camera_intrins['cam0']['pose']['position']['x']
+            camera_pose_y = camera_intrins['cam0']['pose']['position']['y']
+            camera_pose_z = camera_intrins['cam0']['pose']['position']['z']
+            camera_rotation_x = camera_intrins['cam0']['pose']['rotation']['x']
+            camera_rotation_y = camera_intrins['cam0']['pose']['rotation']['y']
+            camera_rotation_z = camera_intrins['cam0']['pose']['rotation']['z']
+            camera_pose = np.array([camera_pose_x, camera_pose_y, camera_pose_z])
+            camera_rotation = np.array([camera_rotation_x, camera_rotation_y, camera_rotation_z])
+
+        camera_transform = construct_contact_nets_transformation(camera_pose, camera_rotation)
 
         all_imgs = []
         all_poses = []
         all_masks = []
         all_bboxes = []
+        # print(rgb_paths)
         for rgb_path, pose_path in zip(rgb_paths, pose_paths):
             img = imageio.imread(rgb_path)[..., :3]
             img_tensor = self.image_to_tensor(img)
@@ -111,7 +124,8 @@ class ContactNetsDataset(torch.utils.data.Dataset):
                 np.loadtxt(pose_path, dtype=np.float32).reshape(4, 4)
             )
             # print(pose)
-            # pose = pose @ self._coord_trans
+            # print(pose)
+            pose = camera_transform @ pose
 
             rows = np.any(mask, axis=1)
             cols = np.any(mask, axis=0)
@@ -135,7 +149,18 @@ class ContactNetsDataset(torch.utils.data.Dataset):
         all_masks = torch.stack(all_masks)
         all_bboxes = torch.stack(all_bboxes)
 
+        permute = np.random.permutation(all_imgs.shape[0])[:30]
+        # print(permute)
+        all_imgs = all_imgs[permute]
+        all_poses = all_poses[permute]
+        all_masks = all_masks[permute]
+        all_bboxes = all_bboxes[permute]
+
+        # print(all_imgs.shape)
+        # print(all_bboxes.shape)
+        # print(all_masks.shape)
         # TODO get focal distance and maybe cx and cy
+
         focal = 1
 
         if all_imgs.shape[-2:] != self.image_size:

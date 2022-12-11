@@ -53,12 +53,19 @@ def extra_args(parser):
     return parser
 
 
+
 args, conf = util.args.parse_args(extra_args, training=True, default_ray_batch_size=128)
 device = util.get_cuda(args.gpu_id[0])
 dset, val_dset, _ = get_split_dataset(args.dataset_format, args.datadir)
 print(
     "dset z_near {}, z_far {}, lindisp {}".format(dset.z_near, dset.z_far, dset.lindisp)
 )
+
+print(device)
+import gc
+gc.collect()
+torch.cuda.empty_cache()
+gc.collect()
 
 net = make_model(conf["model"]).to(device=device)
 net.stop_encoder_grad = args.freeze_enc
