@@ -198,9 +198,11 @@ def construct_contact_nets_transformation(camera_pose, camera_rotation):
     rotation_prime = rotation.T  # USE THIS
     transformation_matrix = np.empty((4, 4), dtype=np.float32)
     translation_prime = -rotation_prime @ camera_pose  # USE THIS
-    transformation_matrix[:3, :3] = rotation_prime
-    transformation_matrix[:3, 3] = translation_prime
+    transformation_matrix[:3, :3] = rotation
+    transformation_matrix[:3, 3] = camera_pose
     transformation_matrix[3, :] = [0, 0, 0, 1]
+    if (np.isnan(transformation_matrix).any()):
+        print("Constructed transformation matrix with NaN values")
     # print(transformation_matrix)
     # print(rotation_prime.shape)
     # print(translation_prime.shape)

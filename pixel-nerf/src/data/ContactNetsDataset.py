@@ -44,7 +44,7 @@ class ContactNetsDataset(torch.utils.data.Dataset):
         )
 
         self.z_near = 0.8
-        self.z_far = 1.8
+        self.z_far = 3.0
         # self.z_near = 4.0
         # self.z_far = 6.0
         self.lindisp = False
@@ -92,7 +92,7 @@ class ContactNetsDataset(torch.utils.data.Dataset):
         dir_path = os.path.dirname(intrin_path)
         rgb_paths = sorted(glob.glob(os.path.join(dir_path, "masked_rgb", "*")))
         pose_paths = sorted(glob.glob(os.path.join(dir_path, "gt_poses", "*")))
-
+        assert len(rgb_paths) == len(pose_paths)
         camera_pose = 0
         camera_rotation = 0
 
