@@ -11,6 +11,7 @@ This README will only contain details for running the part of the project releva
 
 Files from the cube tossing dataset can be downloaded from this google drive link: https://drive.google.com/drive/folders/12eLxVUQB0MxatJtPw7ExiI78WHCSxMiz?usp=share_link.
 *Requires seas@upenn email.
+The dataset has not yet been used in any publications and was generated from members of DAIRlab for future work on learning contact dynamics from tossing trajectories.
 
 Extract the dataset into the `data/nerf_contactnets_data` folder.
 
