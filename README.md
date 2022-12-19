@@ -1,66 +1,35 @@
-# iNeRF
+# iNeRF applied to Cube Tossing trajectory for CIS 6800 Final Project
 
-### [Project Page](https://yenchenlin.me/inerf/) | [Video](https://www.youtube.com/watch?v=eQuCZaQN0tI&feature=emb_logo) | [Paper](https://arxiv.org/pdf/2012.05877.pdf)
+Forked from https://github.com/yenchenlin/iNeRF-public, README for that project is in `original_iNeRF_README.md`, which
+contains many important details about the repository.
 
-<img src="https://user-images.githubusercontent.com/7057863/161620132-2ce16dca-53f6-413d-97ab-fe6086f1661c.gif" height=200>
+Additionally, many important details on training the NeRF can be found at https://github.com/sxyu/pixel-nerf.
 
-PyTorch implementation of iNeRF, an RGB-only method that inverts neural radiance fields (NeRFs) for 6DoF pose estimation.
+This README will only contain details for running the part of the project relevant to the CIS 6800 Final Project.
 
-[iNeRF Inverting Neural Radiance Fields for Pose Estimation](https://yenchenlin.me/inerf/)  
- [Lin Yen-Chen](https://yenchenlin.me/)<sup>1</sup>,
- [Pete Florence](http://www.peteflorence.com/)<sup>2</sup>,
- [Jonathan T. Barron](http://jonbarron.info/)<sup>2</sup>,
- [Alberto Rodriguez](https://meche.mit.edu/people/faculty/ALBERTOR@MIT.EDU)<sup>1</sup>,
- [Phillip Isola](http://web.mit.edu/phillipi/)<sup>1</sup>,
-  [Tsung-Yi Lin](https://scholar.google.com/citations?user=_BPdgV0AAAAJ&hl=en)<sup>2</sup><br>
- <sup>1</sup>MIT, <sup>2</sup>Google
- <br>
- [IROS 2021](https://www.iros2021.org/)
+## Cube Tossing Dataset
 
-## Overview
+Files from the cube tossing dataset can be downloaded from this google drive link: https://drive.google.com/drive/folders/12eLxVUQB0MxatJtPw7ExiI78WHCSxMiz?usp=share_link.
+*Requires seas@upenn email.
 
-This preliminary codebase currently only shows how to apply iNeRF with pixelNeRF. However, iNeRF can work with the original NeRF as well.
+Extract the dataset into the `data/nerf_contactnets_data` folder.
 
-## Environment setup
+The dataset contains rgb and depth images that have the background and robot arm already masked out.
 
-To start, create the environment using conda:
-```sh
-cd pixel-nerf
-conda env create -f environment.yml
-conda activate pixelnerf
-pip install mediapy
-pip install jupyter
-```
+Dataset is separate by the toss number (five total)
+Masked RGB: `masked_rgb/`
+Masked depth (unused): `masked_depth/`
+Camera Extrinsics: `cam_K`
 
-Please make sure you have up-to-date NVIDIA drivers supporting CUDA 10.2 at least.
+Dataloader: `src/data/ContactNetsDataset.py`
 
-## Quick start
+## Training NeRF
 
-1. Download all pixelNeRF's pretrained weight files from [here](https://drive.google.com/file/d/1UO_rL201guN6euoWkCOn-XpqR2e8o6ju/view?usp=sharing).
-Extract this to `./pixel-nerf/checkpoints/`, so that `./pixel-nerf/checkpoints/srn_car/pixel_nerf_latest` exists.
+`python train/train.py -n <experiment_name> -c conf/exp/contactnets.conf -D data/nerf_contactnets_data --resume`
 
-2. Launch the Jupyter notebook.
-```sh
-cd pixel-nerf
-jupyter notebook
-```
+visualizations are generated in the `visuals/<experient_name>` folder
 
-3. Open `pose_estimation.ipynb` and run through it. You can preview the results [here](https://github.com/yenchenlin/iNeRF-public/blob/master/pixel-nerf/pose_estimation.ipynb). In the following, we show the overlay of images rendered with our predicted poses and the target image.
+iNeRF experiment notebook
 
-<img src="https://user-images.githubusercontent.com/7057863/161636178-c4f36310-eb62-44fc-abad-7d90b0637de6.gif" width=128>
+`pose_estimation.ipynb`
 
-
-# BibTeX
-
-```
-@inproceedings{yen2020inerf,
-  title={{iNeRF}: Inverting Neural Radiance Fields for Pose Estimation},
-  author={Lin Yen-Chen and Pete Florence and Jonathan T. Barron and Alberto Rodriguez and Phillip Isola and Tsung-Yi Lin},
-  booktitle={IEEE/RSJ International Conference on Intelligent Robots and Systems ({IROS})},
-  year={2021}
-}
-```
-
-# Acknowledgements
-
-This implementation is based on Alex Yu's [pixel-nerf](https://github.com/sxyu/pixel-nerf).
