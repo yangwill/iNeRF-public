@@ -4,8 +4,14 @@ Forked from https://github.com/yenchenlin/iNeRF-public, README for that project 
 contains many important details about the repository.
 
 Additionally, many important details on training the NeRF can be found at https://github.com/sxyu/pixel-nerf.
+In fact, pixel-nerf is included sort of as a subrepository.
 
 This README will only contain details for running the part of the project relevant to the CIS 6800 Final Project.
+
+## Environment Setup
+
+The authors of pixelNeRF and iNeRF recommend using conda through `conda env create -f environment.yml`, but I prefer creating a virtual environment and installing the requirements through `pip -r requirements.txt`.
+The latest versions of the required packages are compatible with the following scripts.
 
 ## Cube Tossing Dataset
 
