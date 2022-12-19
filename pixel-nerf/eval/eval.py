@@ -318,13 +318,13 @@ with torch.no_grad():
                 images_gt.permute(0, 2, 3, 1).contiguous().numpy()
             )  # (NV-NS, H, W, 3)
             for view_idx in range(n_gen_views):
-                ssim = skimage.measure.compare_ssim(
+                ssim = skimage.metrics.structural_similarity(
                     all_rgb[view_idx],
                     rgb_gt_all[view_idx],
                     multichannel=True,
                     data_range=1,
                 )
-                psnr = skimage.measure.compare_psnr(
+                psnr = skimage.metrics.peak_signal_noise_ratio(
                     all_rgb[view_idx], rgb_gt_all[view_idx], data_range=1
                 )
                 curr_ssim += ssim
